@@ -2,7 +2,7 @@ const getBrowserAndPage = require('./get-browser-and-page');
 const play = require('./play');
 const PlayList = require('./playlist');
 const PageWatcher = require('./page-watcher');
-const controlKeypress = require('./control-keypress');
+const KeyController = require('./key-controller');
 const render = require('./render');
 const speak = require('./speak');
 
@@ -15,15 +15,15 @@ const speak = require('./speak');
   await play(page);
 
   const playList = new PlayList();
-  const pageWatcher = new PageWatcher(page, playList);
 
+  const pageWatcher = new PageWatcher(page, playList);
   pageWatcher.onChangeVideo(video => {
     render(playList);
     speak(page, video.title);
   });
 
-  controlKeypress(browser, page, pageWatcher, playList, () => {
+  const keyController = new KeyController(browser, page, pageWatcher, playList);
+  keyController.onChangeSelector(() => {
     render(playList);
   });
-
 })();
