@@ -5,14 +5,6 @@ class PlayList {
     this.selectedIndex = undefined;
   }
 
-  selectedVideoEqual(video) {
-    const selectedVideo = this.getSelectedVideo();
-    if (!selectedVideo) {
-      return false;
-    }
-    return selectedVideo.equal(video);
-  }
-
   addVideo(video) {
     this._list.push(video);
   }
