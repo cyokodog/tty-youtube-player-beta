@@ -1,8 +1,14 @@
 const Video = require('./video');
 
 module.exports = class PageWatcher {
-  constructor() {
+  constructor(page, playList) {
     this.redirectUrl = '';
+    this._onChangeVideo = () => {};
+    this.startWatch(page, playList);
+  }
+
+  onChangeVideo(cb) {
+    this._onChangeVideo = cb;
   }
 
   requestRedirect(url) {
@@ -45,23 +51,24 @@ module.exports = class PageWatcher {
     };
   }
 
-  startWatch(page, playList, onChangeVideo) {
+  startWatch(page, playList) {
     const watch = async () => {
-      await this._watch(page, playList, onChangeVideo);
+      await this._watch(page, playList);
       setTimeout(watch, 300);
     };
     watch();
   }
 
-  async _watch(page, playList, onChangeVideo) {
+  async _watch(page, playList) {
     if (!this.isFinishedRedirect()) {
       await this.execRedirect(page);
       return;
     }
-    await this._watchChangingVideo(page, playList, onChangeVideo);
+    await this._watchVideoChange(page, playList);
+    await this._skipAd(page);
   }
 
-  async _watchChangingVideo(page, playList, onChangeVideo) {
+  async _watchVideoChange(page, playList) {
     const {
       isChangedPage,
       title,
@@ -77,17 +84,30 @@ module.exports = class PageWatcher {
     if (playList.selectedIndexIsLast()) {
       playList.addVideo(video);
       playList.nextCurrentIndex(true);
-      onChangeVideo();
+      this._onChangeVideo(video);
       return;
     }
     if (this.isFinishedRedirect()) {
       playList.nextCurrentIndex(true);
-      const selectedUrl = playList.getSelectedVideo().url;
-      if (selectedUrl !== url) {
-        this.requestRedirect(selectedUrl);
+      const selectedVideo = playList.getSelectedVideo();
+      if (selectedVideo.url !== url) {
+        this.requestRedirect(selectedVideo.url);
       }
-      onChangeVideo();
+      this._onChangeVideo(selectedVideo);
     }
+  }
+
+  async _skipAd(page) {
+    await page.evaluate(() => {
+      const skipBtn = document.querySelector('button.videoAdUiSkipButton');
+      if (skipBtn) {
+        skipBtn.click();
+      }
+      const ads = document.querySelector('.video-ads');
+      if (ads && ads.style.display !== 'none') {
+        ads.style.display = 'none';
+      }
+    });
   }
 
 };

@@ -34,8 +34,9 @@ module.exports = async (browser, page, pageWatcher, playList, onChangeCursor) =>
 
     if (key.name === 'space') {
       playList.syncSelectedIndex();
-      pageWatcher.requestRedirect(playList.getSelectedVideo().url);
-      onChangeCursor();
+      const video = playList.getSelectedVideo();
+      pageWatcher.requestRedirect(video.url);
+      onChangeCursor(video);
     }
   });
 

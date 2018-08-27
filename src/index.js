@@ -4,6 +4,7 @@ const PlayList = require('./playlist');
 const PageWatcher = require('./page-watcher');
 const controlKeypress = require('./control-keypress');
 const render = require('./render');
+const speak = require('./speak');
 
 (async () => {
   const {
@@ -14,13 +15,15 @@ const render = require('./render');
   await play(page);
 
   const playList = new PlayList();
-  const pageWatcher = new PageWatcher();
+  const pageWatcher = new PageWatcher(page, playList);
 
-  pageWatcher.startWatch(page, playList, onChangeVideoOrCursor);
-
-  await controlKeypress(browser, page, pageWatcher, playList, onChangeVideoOrCursor);
-
-  function onChangeVideoOrCursor() {
+  pageWatcher.onChangeVideo(video => {
     render(playList);
-  }
+    speak(page, video.title);
+  });
+
+  controlKeypress(browser, page, pageWatcher, playList, () => {
+    render(playList);
+  });
+
 })();
